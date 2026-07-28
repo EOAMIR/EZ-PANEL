@@ -1,174 +1,46 @@
 #!/bin/bash
 
-# =================================================================
-#  Project:      EZ-Panel
-#  Repository:   https://github.com/EOAMIR/EZ-PANEL
-#  Script:       Ultra-Fast Downloader & System Command Installer
-# =================================================================
-
 set -e
 
-# --- Color Definitions ---
-CYAN='\033[0;36m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-BOLD='\033[1m'
-NC='\033[0m' # No Color
+RED='\e[1;31m'
+NC='\e[0m'
 
-# --- UI Helper Functions ---
-print_banner() {
-    clear
-    echo -e "${CYAN}=====================================================${NC}"
-    echo -e "${CYAN}${BOLD}                 EZ-PANEL INSTALLER                  ${NC}"
-    echo -e "${CYAN}=====================================================${NC}"
-    echo ""
-}
+REPO_RAW="https://raw.githubusercontent.com/EOAMIR/EZ-PANEL/main"
+INSTALL_PATH="/usr/local/bin/EZ-Panel"
+TMP_PATH="/tmp/EZ-Panel.py"
 
-print_step() {
-    echo -e "${BOLD}${CYAN}[*] $1${NC}"
-}
-
-print_success() {
-    echo -e "${GREEN}[+] $1${NC}"
-}
-
-print_warning() {
-    echo -e "${YELLOW}[!] $1${NC}"
-}
-
-print_error() {
-    echo -e "${RED}[-] $1${NC}"
-}
-
-# --- Root Privileges Check ---
-if [ "$EUID" -ne 0 ]; then
-    print_banner
-    print_error "Error: Root privileges are required to run this script."
-    print_warning "Please execute with sudo or as root user."
+if [ "$(id -u)" -ne 0 ]; then
+    echo -e "${RED}[-] Please run as root (sudo).${NC}"
     exit 1
 fi
 
-print_banner
+echo -e "${RED}[*] Installing EZ-Panel (open source)...${NC}"
 
-# --- Step 1: Essential Dependencies Check ---
-print_step "Checking required core tools..."
-PACKAGES=""
-
-if ! command -v python3 &> /dev/null; then
-    PACKAGES="$PACKAGES python3 python3-pip"
+if command -v apt-get >/dev/null 2>&1; then
+    apt-get update -y >/dev/null 2>&1 || true
+    apt-get install -y python3 python3-pip curl >/dev/null 2>&1 || true
 fi
 
-if ! command -v curl &> /dev/null; then
-    PACKAGES="$PACKAGES curl"
-fi
+pip3 install --break-system-packages requests urllib3 >/dev/null 2>&1 || \
+pip3 install requests urllib3 >/dev/null 2>&1 || true
 
-if [ -n "$PACKAGES" ]; then
-    print_step "Installing missing base packages ($PACKAGES)..."
-    apt-get update -y > /dev/null 2>&1
-    apt-get install -y $PACKAGES > /dev/null 2>&1
-    print_success "Base packages installed successfully."
-else
-    print_success "All required base tools are already installed."
-fi
+curl -fsSL "${REPO_RAW}/EZ-Panel.py?v=$(date +%s)" -o "${TMP_PATH}"
 
-# --- Step 2: Download EZ-Panel.py ---
-INSTALL_DIR="/opt/EZ-PANEL"
-FILE_URL="https://raw.githubusercontent.com/EOAMIR/EZ-PANEL/main/EZ-Panel.py"
-
-mkdir -p "$INSTALL_DIR"
-
-print_step "Downloading EZ-Panel.py..."
-curl -sL "$FILE_URL" -o "$INSTALL_DIR/EZ-Panel.py"
-
-if [ ! -s "$INSTALL_DIR/EZ-Panel.py" ]; then
-    print_error "Failed to download EZ-Panel.py. Check raw URL or repo branch."
+if [ ! -s "${TMP_PATH}" ]; then
+    echo -e "${RED}[-] Download failed. Check GitHub repo/file name.${NC}"
     exit 1
 fi
 
-print_success "EZ-Panel.py downloaded successfully."
-
-# --- Step 3: Bulletproof Python Packages Installation ---
-print_step "Installing Python packages..."
-
-# Temporarily disable exit-on-error for pip
-set +e
-python3 -m pip install --upgrade pip > /dev/null 2>&1
-python3 -m pip install requests python-telegram-bot --break-system-packages --ignore-installed > /dev/null 2>&1
-if [ $? -ne 0 ]; then
-    pip3 install requests python-telegram-bot > /dev/null 2>&1
+if ! head -n 1 "${TMP_PATH}" | grep -q "python"; then
+    printf '%s\n%s\n' '#!/usr/bin/env python3' "$(cat "${TMP_PATH}")" > "${TMP_PATH}.tmp"
+    mv "${TMP_PATH}.tmp" "${TMP_PATH}"
 fi
-set -e
 
-print_success "Python packages installed successfully."
+mv "${TMP_PATH}" "${INSTALL_PATH}"
+chmod +x "${INSTALL_PATH}"
 
-# --- Step 4: Systemd Service Configuration ---
-print_step "Configuring systemd service..."
+echo -e "${RED}[+] Installed to ${INSTALL_PATH}${NC}"
+echo -e "${RED}[+] Launching EZ-Panel...${NC}"
+echo
 
-SERVICE_FILE="/etc/systemd/system/ez-panel.service"
-
-cat <<EOF > $SERVICE_FILE
-[Unit]
-Description=EZ-Panel Management Service
-After=network.target
-
-[Service]
-Type=simple
-User=root
-WorkingDirectory=$INSTALL_DIR
-ExecStart=/usr/bin/python3 $INSTALL_DIR/EZ-Panel.py
-Restart=always
-RestartSec=3
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-systemctl daemon-reload
-systemctl enable ez-panel.service > /dev/null 2>&1
-print_success "Systemd service configured successfully."
-
-# --- Step 5: Create Global CLI Shortcut ---
-print_step "Creating 'EZ-Panel' command shortcut..."
-
-SHORTCUT_PATH="/usr/local/bin/EZ-Panel"
-
-cat <<'EOF' > $SHORTCUT_PATH
-#!/bin/bash
-sudo bash -c "$(curl -sL "https://raw.githubusercontent.com/EOAMIR/EZ-PANEL/main/install.sh")"
-EOF
-
-chmod +x $SHORTCUT_PATH
-print_success "System command 'EZ-Panel' created successfully."
-
-# --- Step 6: Start Service ---
-print_step "Starting EZ-Panel service..."
-systemctl restart ez-panel.service
-
-sleep 2
-
-# --- Final Output & Direct Execution ---
-if systemctl is-active --quiet ez-panel.service; then
-    echo ""
-    echo -e "${GREEN}=====================================================${NC}"
-    echo -e "${GREEN}${BOLD}      EZ-PANEL INSTALLED & STARTED SUCCESSFULLY      ${NC}"
-    echo -e "${GREEN}=====================================================${NC}"
-    echo ""
-    echo -e " Shortcut Command: ${YELLOW}EZ-Panel${NC} (Run installer anytime)"
-    echo -e " Service Status:   ${YELLOW}systemctl status ez-panel.service${NC}"
-    echo -e " View Logs:        ${YELLOW}journalctl -u ez-panel.service -f${NC}"
-    echo ""
-    echo -e "${CYAN}Launching EZ-Panel.py...${NC}"
-    echo ""
-    
-    python3 "$INSTALL_DIR/EZ-Panel.py"
-else
-    echo ""
-    echo -e "${RED}=====================================================${NC}"
-    echo -e "${RED}${BOLD}            INSTALLATION FAILED / ERROR              ${NC}"
-    echo -e "${RED}=====================================================${NC}"
-    echo ""
-    print_error "Failed to start EZ-Panel service."
-    print_warning "Check logs using: journalctl -u ez-panel.service -n 20"
-    exit 1
-fi
+exec "${INSTALL_PATH}"
