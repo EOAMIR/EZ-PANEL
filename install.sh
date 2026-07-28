@@ -88,11 +88,17 @@ fi
 
 print_success "EZ-Panel.py downloaded successfully."
 
-# --- Step 3: Safe Python Packages Installation ---
+# --- Step 3: Bulletproof Python Packages Installation ---
 print_step "Installing Python packages..."
-# Non-blocking pip install using || true to prevent script crash
-pip3 install requests python-telegram-bot --break-system-packages > /dev/null 2>&1 || \
-pip3 install requests python-telegram-bot > /dev/null 2>&1 || true
+
+# Temporarily disable exit-on-error for pip
+set +e
+python3 -m pip install --upgrade pip > /dev/null 2>&1
+python3 -m pip install requests python-telegram-bot --break-system-packages --ignore-installed > /dev/null 2>&1
+if [ $? -ne 0 ]; then
+    pip3 install requests python-telegram-bot > /dev/null 2>&1
+fi
+set -e
 
 print_success "Python packages installed successfully."
 
