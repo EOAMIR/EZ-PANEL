@@ -4,7 +4,7 @@
 
 # 🚀 اسکریپت EZ-Panel
 
-![Version](https://img.shields.io/badge/Version-v2.0-blue.svg)
+![Version](https://img.shields.io/badge/Version-v1.4.1-blue.svg)
 ![Python](https://img.shields.io/badge/Language-Python-green.svg)
 
 ## 🛠 راهنمای نصب
