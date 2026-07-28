@@ -3,7 +3,7 @@
 # =================================================================
 #  Project:      EZ-Panel
 #  Repository:   https://github.com/EOAMIR/EZ-PANEL
-#  Script:       Automated Installation Script
+#  Script:       Service Installer
 # =================================================================
 
 set -e
@@ -57,37 +57,32 @@ apt-get update -y > /dev/null 2>&1
 apt-get upgrade -y > /dev/null 2>&1
 print_success "System updated successfully."
 
-print_step "Installing required dependencies (Python3, Git, Systemd)..."
-apt-get install -y python3 python3-pip python3-venv git systemd > /dev/null 2>&1
+print_step "Installing required dependencies (Python3, Curl, Systemd)..."
+apt-get install -y python3 python3-pip curl systemd > /dev/null 2>&1
 print_success "Dependencies installed successfully."
 
-# --- Step 2: Repository Setup ---
+# --- Step 2: Download EZ-Panel.py File ---
 INSTALL_DIR="/opt/EZ-PANEL"
-REPO_URL="https://github.com/EOAMIR/EZ-PANEL.git"
+FILE_URL="https://raw.githubusercontent.com/EOAMIR/EZ-PANEL/main/EZ-Panel.py"
 
-if [ -d "$INSTALL_DIR" ]; then
-    print_step "Existing installation detected. Updating files..."
-    cd "$INSTALL_DIR"
-    git fetch --all > /dev/null 2>&1
-    git reset --hard origin/main > /dev/null 2>&1
-    print_success "Repository updated successfully."
-else
-    print_step "Cloning EZ-Panel repository..."
-    git clone "$REPO_URL" "$INSTALL_DIR" > /dev/null 2>&1
-    cd "$INSTALL_DIR"
-    print_success "Repository cloned successfully."
+mkdir -p "$INSTALL_DIR"
+cd "$INSTALL_DIR"
+
+print_step "Downloading EZ-Panel.py..."
+curl -sL "$FILE_URL" -o "$INSTALL_DIR/EZ-Panel.py"
+
+if [ ! -s "$INSTALL_DIR/EZ-Panel.py" ]; then
+    print_error "Failed to download EZ-Panel.py. Please check repository URL or main branch name."
+    exit 1
 fi
+
+print_success "EZ-Panel.py downloaded successfully."
 
 # --- Step 3: Python Packages Installation ---
 print_step "Installing required Python packages..."
-if [ -f "$INSTALL_DIR/requirements.txt" ]; then
-    pip3 install -r "$INSTALL_DIR/requirements.txt" --break-system-packages > /dev/null 2>&1 || \
-    pip3 install -r "$INSTALL_DIR/requirements.txt" > /dev/null 2>&1
-else
-    pip3 install flask requests python-telegram-bot --break-system-packages > /dev/null 2>&1 || \
-    pip3 install flask requests python-telegram-bot > /dev/null 2>&1
-fi
-print_success "Python environment prepared successfully."
+pip3 install flask requests python-telegram-bot --break-system-packages > /dev/null 2>&1 || \
+pip3 install flask requests python-telegram-bot > /dev/null 2>&1
+print_success "Python packages installed successfully."
 
 # --- Step 4: Systemd Service Configuration ---
 print_step "Creating systemd service..."
