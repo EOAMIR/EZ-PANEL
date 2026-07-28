@@ -18,7 +18,7 @@ sudo bash -c "$(curl -sL "https://raw.githubusercontent.com/EOAMIR/EZ-Panel/main
 در صورتی که دستور بالا برای شما اجرا نشد، از لینک جایگزین زیر استفاده کنید:
 
 ```bash
-sudo bash -c "$(curl -sL "https://raw.githack.com/1NoJoom/EOAMIR/main/install.sh")"
+sudo bash -c "$(curl -sL "https://raw.githack.com/EOAMIR/main/install.sh")"
 ```
 
 > 💡 لینک دوم از CDN گیت‌هاب استفاده نمی‌کند و در برخی شبکه‌ها که دسترسی به `raw.githubusercontent.com` محدود است می‌تواند بدون مشکل اجرا شود.
