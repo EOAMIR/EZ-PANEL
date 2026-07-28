@@ -12,13 +12,13 @@
 برای نصب اسکریپت، کافیست با دسترسی روت (Root) وارد ترمینال سرور خود شده و دستور زیر را اجرا کنید:
 
 ```bash
-sudo bash -c "$(curl -sL "https://raw.githubusercontent.com/1NoJoom/EZ-Panel/main/install.sh")"
+sudo bash -c "$(curl -sL "https://raw.githubusercontent.com/EOAMIR/EZ-Panel/main/install.sh")"
 ```
 
 در صورتی که دستور بالا برای شما اجرا نشد، از لینک جایگزین زیر استفاده کنید:
 
 ```bash
-sudo bash -c "$(curl -sL "https://raw.githack.com/1NoJoom/EZ-Panel/main/install.sh")"
+sudo bash -c "$(curl -sL "https://raw.githack.com/1NoJoom/EOAMIR/main/install.sh")"
 ```
 
 > 💡 لینک دوم از CDN گیت‌هاب استفاده نمی‌کند و در برخی شبکه‌ها که دسترسی به `raw.githubusercontent.com` محدود است می‌تواند بدون مشکل اجرا شود.
