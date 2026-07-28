@@ -3,7 +3,7 @@
 # =================================================================
 #  Project:      EZ-Panel
 #  Repository:   https://github.com/EOAMIR/EZ-PANEL
-#  Script:       Service Installer
+#  Script:       Ultra-Fast Downloader & System Command Installer
 # =================================================================
 
 set -e
@@ -51,41 +51,51 @@ fi
 
 print_banner
 
-# --- Step 1: System Update & Dependencies ---
-print_step "Updating system packages..."
-apt-get update -y > /dev/null 2>&1
-apt-get upgrade -y > /dev/null 2>&1
-print_success "System updated successfully."
+# --- Step 1: Essential Dependencies Check ---
+print_step "Checking required core tools..."
+PACKAGES=""
 
-print_step "Installing required dependencies (Python3, Curl, Systemd)..."
-apt-get install -y python3 python3-pip curl systemd > /dev/null 2>&1
-print_success "Dependencies installed successfully."
+if ! command -v python3 &> /dev/null; then
+    PACKAGES="$PACKAGES python3 python3-pip"
+fi
 
-# --- Step 2: Download EZ-Panel.py File ---
+if ! command -v curl &> /dev/null; then
+    PACKAGES="$PACKAGES curl"
+fi
+
+if [ -n "$PACKAGES" ]; then
+    print_step "Installing missing base packages ($PACKAGES)..."
+    apt-get update -y > /dev/null 2>&1
+    apt-get install -y $PACKAGES > /dev/null 2>&1
+    print_success "Base packages installed successfully."
+else
+    print_success "All required base tools are already installed."
+fi
+
+# --- Step 2: Download EZ-Panel.py ---
 INSTALL_DIR="/opt/EZ-PANEL"
 FILE_URL="https://raw.githubusercontent.com/EOAMIR/EZ-PANEL/main/EZ-Panel.py"
 
 mkdir -p "$INSTALL_DIR"
-cd "$INSTALL_DIR"
 
 print_step "Downloading EZ-Panel.py..."
 curl -sL "$FILE_URL" -o "$INSTALL_DIR/EZ-Panel.py"
 
 if [ ! -s "$INSTALL_DIR/EZ-Panel.py" ]; then
-    print_error "Failed to download EZ-Panel.py. Please check repository URL or main branch name."
+    print_error "Failed to download EZ-Panel.py. Check raw URL or repo branch."
     exit 1
 fi
 
 print_success "EZ-Panel.py downloaded successfully."
 
-# --- Step 3: Python Packages Installation ---
-print_step "Installing required Python packages..."
+# --- Step 3: Fast Python Packages Installation ---
+print_step "Installing Python packages..."
 pip3 install flask requests python-telegram-bot --break-system-packages > /dev/null 2>&1 || \
 pip3 install flask requests python-telegram-bot > /dev/null 2>&1
 print_success "Python packages installed successfully."
 
 # --- Step 4: Systemd Service Configuration ---
-print_step "Creating systemd service..."
+print_step "Configuring systemd service..."
 
 SERVICE_FILE="/etc/systemd/system/ez-panel.service"
 
@@ -110,24 +120,41 @@ systemctl daemon-reload
 systemctl enable ez-panel.service > /dev/null 2>&1
 print_success "Systemd service configured successfully."
 
-# --- Step 5: Start Service ---
+# --- Step 5: Create Global CLI Shortcut ---
+print_step "Creating 'EZ-Panel' command shortcut..."
+
+SHORTCUT_PATH="/usr/local/bin/EZ-Panel"
+
+cat <<'EOF' > $SHORTCUT_PATH
+#!/bin/bash
+sudo bash -c "$(curl -sL "https://raw.githubusercontent.com/EOAMIR/EZ-PANEL/main/install.sh")"
+EOF
+
+chmod +x $SHORTCUT_PATH
+print_success "System command 'EZ-Panel' created successfully."
+
+# --- Step 6: Start Service ---
 print_step "Starting EZ-Panel service..."
 systemctl restart ez-panel.service
 
 sleep 2
 
-# --- Final Check & Output ---
+# --- Final Output & Direct Execution ---
 if systemctl is-active --quiet ez-panel.service; then
     echo ""
     echo -e "${GREEN}=====================================================${NC}"
     echo -e "${GREEN}${BOLD}      EZ-PANEL INSTALLED & STARTED SUCCESSFULLY      ${NC}"
     echo -e "${GREEN}=====================================================${NC}"
     echo ""
+    echo -e " Shortcut Command: ${YELLOW}EZ-Panel${NC} (Run installer anytime)"
     echo -e " Service Status:   ${YELLOW}systemctl status ez-panel.service${NC}"
     echo -e " View Logs:        ${YELLOW}journalctl -u ez-panel.service -f${NC}"
-    echo -e " Restart Service:  ${YELLOW}systemctl restart ez-panel.service${NC}"
-    echo -e " Stop Service:     ${YELLOW}systemctl stop ez-panel.service${NC}"
     echo ""
+    echo -e "${CYAN}Launching EZ-Panel.py...${NC}"
+    echo ""
+    
+    # Direct execution of python script right after installation
+    python3 "$INSTALL_DIR/EZ-Panel.py"
 else
     echo ""
     echo -e "${RED}=====================================================${NC}"
