@@ -1,10 +1,11 @@
 # EZ-PANEL
+
 <div dir="rtl">
 
 # 🚀 اسکریپت EZ-Panel
 
 ![Version](https://img.shields.io/badge/Version-v1.4-blue.svg)
-![Bash](https://img.shields.io/badge/Language-Bash-green.svg)
+![Python](https://img.shields.io/badge/Language-Python-green.svg)
 
 ## 🛠 راهنمای نصب
 
@@ -13,6 +14,14 @@
 ```bash
 sudo bash -c "$(curl -sL "https://raw.githubusercontent.com/1NoJoom/EZ-Panel/main/install.sh")"
 ```
+
+در صورتی که دستور بالا برای شما اجرا نشد، از لینک جایگزین زیر استفاده کنید:
+
+```bash
+sudo bash -c "$(curl -sL "https://raw.githack.com/1NoJoom/EZ-Panel/main/install.sh")"
+```
+
+> 💡 لینک دوم از CDN گیت‌هاب استفاده نمی‌کند و در برخی شبکه‌ها که دسترسی به `raw.githubusercontent.com` محدود است می‌تواند بدون مشکل اجرا شود.
 
 ## 🔄 نحوه اجرای مجدد منو
 
@@ -37,6 +46,8 @@ EZ-Panel
 
 اگر این پروژه برای شما مفید بوده است، می‌توانید با عضویت در کانال تلگرام از آخرین بروزرسانی‌ها و آموزش‌ها مطلع شوید و از توسعه پروژه حمایت کنید.
 
-</div>
+---
 
-Forked From 1NoJoom/EZ-Panel
+<sub><sub>Forked from 1NoJoom/EZ-Panel</sub></sub>
+
+</div>
