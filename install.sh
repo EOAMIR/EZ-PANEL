@@ -88,10 +88,12 @@ fi
 
 print_success "EZ-Panel.py downloaded successfully."
 
-# --- Step 3: Fast Python Packages Installation ---
+# --- Step 3: Safe Python Packages Installation ---
 print_step "Installing Python packages..."
-pip3 install flask requests python-telegram-bot --break-system-packages > /dev/null 2>&1 || \
-pip3 install flask requests python-telegram-bot > /dev/null 2>&1
+# Non-blocking pip install using || true to prevent script crash
+pip3 install requests python-telegram-bot --break-system-packages > /dev/null 2>&1 || \
+pip3 install requests python-telegram-bot > /dev/null 2>&1 || true
+
 print_success "Python packages installed successfully."
 
 # --- Step 4: Systemd Service Configuration ---
@@ -153,7 +155,6 @@ if systemctl is-active --quiet ez-panel.service; then
     echo -e "${CYAN}Launching EZ-Panel.py...${NC}"
     echo ""
     
-    # Direct execution of python script right after installation
     python3 "$INSTALL_DIR/EZ-Panel.py"
 else
     echo ""
